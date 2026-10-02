@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head >
+<link rel="manifest" href="manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0b0b">
+<title>GFX Trading Calculator</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0b0b0b;
+  color: white;
+}
+
+header {
+  background: #151515;
+  padding: 18px;
+  text-align: center;
+  border-bottom: 1px solid #333;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+header p {
+  margin: 6px 0 0;
+  color: #aaa;
+  font-size: 12px;
+}
+
+nav {
+  display: flex;
+  overflow-x: auto;
+  background: #111;
+  padding: 8px;
+  gap: 7px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+nav button {
+  background: #222;
+  color: white;
+  border: 1px solid #444;
+  padding: 10px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+nav button.active {
+  background: #e50914;
+  border-color: #e50914;
+}
+
+main {
+  max-width: 700px;
+  margin: auto;
+  padding: 14px;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+.card {
+  background: #151515;
+  border: 1px solid #292929;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+h3 {
+  font-size: 15px;
+  color: #ccc;
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  color: #aaa;
+  font-size: 13px;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #0c0c0c;
+  color: white;
+  font-size: 15px;
+}
+
+button.action {
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px;
+  border: none;
+  border-radius: 8px;
+  background: #e50914;
+  color: white;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+button.secondary {
+  background: #292929;
+}
+
+button.danger {
+  background: #7d1118;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media(max-width: 500px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.result {
+  background: #0d0d0d;
+  border: 1px solid #333;
+  border-radius: 9px;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.result small {
+  color: #888;
+}
+
+.result strong {
+  display: block;
+  font-size: 21px;
+  margin-top: 4px;
+}
+
+.green {
+  color: #39d98a;
+}
+
+.red {
+  color: #ff5555;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.stat {
+  background: #0d0d0d;
+  border: 1px solid #333;
+  padding: 13px;
+  border-radius: 9px;
+}
+
+.stat small {
+  color: #888;
+}
+
+.stat strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 19px;
+}
+
+.trade {
+  border-bottom: 1px solid #333;
+  padding: 12px 0;
+}
+
+.trade:last-child {
+  border-bottom: none;
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #666;
+  font-size: 11px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>GFX Trading Calculator</h1>
+  <p>Risk Management • Compounding • Prop Firm • Journal</p>
+</header>
+
+<nav>
+  <button class="tab active" onclick="openPage('risk', this)">V1 Risk</button>
+  <button class="tab" onclick="openPage('rr', this)">V2 R:R</button>
+  <button class="tab" onclick="openPage('compound', this)">V3 Compound</button>
+  <button class="tab" onclick="openPage('prop', this)">V4 Prop</button>
+  <button class="tab" onclick="openPage('journal', this)">V5 Journal</button>
+</nav>
+
+<main>
+
+<!-- ================= V1 ================= -->
+
+<section id="risk" class="page active">
+
+<div class="card">
+<h2>V1 — Risk Calculator</h2>
+
+<label>Account Balance ($)</label>
+<input id="balance" type="number" value="100">
+
+<label>Risk (%)</label>
+<input id="riskPercent" type="number" value="2" step="0.1">
+
+<label>Stop Loss (pips)</label>
+<input id="stopLoss" type="number" value="30">
+
+<label>Pip Value per 1 Lot ($)</label>
+<input id="pipValue" type="number" value="10">
+
+<button class="action" onclick="calculateRisk()">CALCULATE</button>
+
+<div class="result">
+<small>Money at Risk</small>
+<strong class="red" id="riskMoney">$0.00</strong>
+</div>
+
+<div class="result">
+<small>Lot Size</small>
+<strong id="lotSize">0.000</strong>
+</div>
+
+</div>
+
+<div class="card">
+<h3>Quick Risk</h3>
+
+<div class="stats">
+<div class="stat">
+<small>1%</small>
+<strong id="onePercent">$0</strong>
+</div>
+
+<div class="stat">
+<small>2%</small>
+<strong id="twoPercent">$0</strong>
+</div>
+
+<div class="stat">
+<small>3%</small>
+<strong id="threePercent">$0</strong>
+</div>
+
+<div class="stat">
+<small>5%</small>
+<strong id="fivePercent">$0</strong>
+</div>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= V2 ================= -->
+
+<section id="rr" class="page">
+
+<div class="card">
+<h2>V2 — Risk / Reward</h2>
+
+<label>Risk Amount ($)</label>
+<input id="rrRisk" type="number" value="2">
+
+<label>Risk : Reward</label>
+<input id="rrRatio" type="number" value="3.5" step="0.1">
+
+<label>Stop Loss (pips)</label>
+<input id="rrSL" type="number" value="30">
+
+<button class="action" onclick="calculateRR()">CALCULATE</button>
+
+<div class="result">
+<small>Potential Profit</small>
+<strong class="green" id="rrProfit">$0.00</strong>
+</div>
+
+<div class="result">
+<small>Potential Loss</small>
+<strong class="red" id="rrLoss">$0.00</strong>
+</div>
+
+<div class="result">
+<small>Take Profit Distance</small>
+<strong id="rrTP">0 pips</strong>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= V3 ================= -->
+
+<section id="compound" class="page">
+
+<div class="card">
+<h2>V3 — Compounding Calculator</h2>
+
+<label>Starting Balance ($)</label>
+<input id="startBalance" type="number" value="100">
+
+<label>Risk / Return per Trade (%)</label>
+<input id="compoundPercent" type="number" value="2" step="0.1">
+
+<label>Number of Trades / Days</label>
+<input id="compoundTrades" type="number" value="10">
+
+<label>Win Rate (%)</label>
+<input id="winRate" type="number" value="60">
+
+<label>Risk : Reward</label>
+<input id="compoundRR" type="number" value="3" step="0.1">
+
+<button class="action" onclick="calculateCompound()">CALCULATE</button>
+
+<div class="result">
+<small>Estimated Final Balance</small>
+<strong class="green" id="finalBalance">$0.00</strong>
+</div>
+
+<div class="result">
+<small>Estimated Profit</small>
+<strong class="green" id="compoundProfit">$0.00</strong>
+</div>
+
+<p style="color:#777;font-size:11px;">
+Illustration only. Real trading results can differ significantly.
+</p>
+
+</div>
+
+</section>
+
+
+<!-- ================= V4 ================= -->
+
+<section id="prop" class="page">
+
+<div class="card">
+<h2>V4 — Prop Firm Risk</h2>
+
+<label>Account Size ($)</label>
+<input id="propAccount" type="number" value="100000">
+
+<div class="grid">
+
+<div>
+<label>Daily Loss Limit (%)</label>
+<input id="dailyLimit" type="number" value="5">
+</div>
+
+<div>
+<label>Total Loss Limit (%)</label>
+<input id="totalLimit" type="number" value="10">
+</div>
+
+</div>
+
+<label>Risk per Trade (%)</label>
+<input id="propRisk" type="number" value="1">
+
+<button class="action" onclick="calculateProp()">CALCULATE</button>
+
+<div class="result">
+<small>Maximum Daily Loss</small>
+<strong class="red" id="dailyMoney">$0</strong>
+</div>
+
+<div class="result">
+<small>Maximum Total Loss</small>
+<strong class="red" id="totalMoney">$0</strong>
+</div>
+
+<div class="result">
+<small>Risk per Trade</small>
+<strong id="propRiskMoney">$0</strong>
+</div>
+
+<div class="result">
+<small>Approx. Full Losses Before Daily Limit</small>
+<strong id="tradeLimit">0</strong>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ================= V5 ================= -->
+
+<section id="journal" class="page">
+
+<div class="card">
+<h2>V5 — Trade Journal</h2>
+
+<label>Pair / Instrument</label>
+<input id="tradePair" placeholder="XAUUSD">
+
+<label>Result</label>
+<select id="tradeResult">
+<option value="win">Win</option>
+<option value="loss">Loss</option>
+</select>
+
+<label>R Result</label>
+<input id="tradeR" type="number" value="3" step="0.1">
+
+<button class="action" onclick="addTrade()">ADD TRADE</button>
+<button class="action secondary" onclick="clearTrades()">CLEAR JOURNAL</button>
+
+</div>
+
+<div class="card">
+<h2>Trading Stats</h2>
+
+<div class="stats">
+
+<div class="stat">
+<small>Total Trades</small>
+<strong id="totalTrades">0</strong>
+</div>
+
+<div class="stat">
+<small>Wins</small>
+<strong id="wins">0</strong>
+</div>
+
+<div class="stat">
+<small>Losses</small>
+<strong id="losses">0</strong>
+</div>
+
+<div class="stat">
+<small>Win Rate</small>
+<strong id="winRateStat">0%</strong>
+</div>
+
+<div class="stat">
+<small>Total R</small>
+<strong id="totalR">0R</strong>
+</div>
+
+<div class="stat">
+<small>Average R</small>
+<strong id="averageR">0R</strong>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+<h2>Trade History</h2>
+<div id="tradeList">
+<div class="empty">No trades yet.</div>
+</div>
+</div>
+
+</section>
+
+</main>
+
+<footer>
+GFX Trading Calculator • V1–V5
+</footer>
+
+
+<script>
+
+/* ================= PAGE SYSTEM ================= */
+
+function openPage(pageId, button) {
+
+  var pages = document.querySelectorAll(".page");
+
+  for (var i = 0; i < pages.length; i++) {
+    pages[i].classList.remove("active");
+  }
+
+  var tabs = document.querySelectorAll(".tab");
+
+  for (var j = 0; j < tabs.length; j++) {
+    tabs[j].classList.remove("active");
+  }
+
+  document.getElementById(pageId).classList.add("active");
+  button.classList.add("active");
+}
+
+
+/* ================= V1 RISK ================= */
+
+function calculateRisk() {
+
+  var balance = Number(document.getElementById("balance").value);
+  var riskPercent = Number(document.getElementById("riskPercent").value);
+  var stopLoss = Number(document.getElementById("stopLoss").value);
+  var pipValue = Number(document.getElementById("pipValue").value);
+
+  if (
+    balance <= 0 ||
+    riskPercent <= 0 ||
+    stopLoss <= 0 ||
+    pipValue <= 0
+  ) {
+    alert("Please enter valid numbers.");
+    return;
+  }
+
+  var moneyRisk = balance * riskPercent / 100;
+  var lots = moneyRisk / (stopLoss * pipValue);
+
+  document.getElementById("riskMoney").textContent =
+    "$" + moneyRisk.toFixed(2);
+
+  document.getElementById("lotSize").textContent =
+    lots.toFixed(3);
+
+  document.getElementById("onePercent").textContent =
+    "$" + (balance * 0.01).toFixed(2);
+
+  document.getElementById("twoPercent").textContent =
+    "$" + (balance * 0.02).toFixed(2);
+
+  document.getElementById("threePercent").textContent =
+    "$" + (balance * 0.03).toFixed(2);
+
+  document.getElementById("fivePercent").textContent =
+    "$" + (balance * 0.05).toFixed(2);
+}
+
+
+/* ================= V2 RR ================= */
+
+function calculateRR() {
+
+  var risk = Number(document.getElementById("rrRisk").value);
+  var ratio = Number(document.getElementById("rrRatio").value);
+  var sl = Number(document.getElementById("rrSL").value);
+
+  if (risk <= 0 || ratio <= 0 || sl <= 0) {
+    alert("Please enter valid numbers.");
+    return;
+  }
+
+  var profit = risk * ratio;
+  var tp = sl * ratio;
+
+  document.getElementById("rrProfit").textContent =
+    "$" + profit.toFixed(2);
+
+  document.getElementById("rrLoss").textContent =
+    "-$" + risk.toFixed(2);
+
+  document.getElementById("rrTP").textContent =
+    tp.toFixed(1) + " pips";
+}
+
+
+/* ================= V3 COMPOUND ================= */
+
+function calculateCompound() {
+
+  var balance = Number(document.getElementById("startBalance").value);
+  var percent = Number(document.getElementById("compoundPercent").value);
+  var trades = Number(document.getElementById("compoundTrades").value);
+  var winRate = Number(document.getElementById("winRate").value);
+  var rr = Number(document.getElementById("compoundRR").value);
+
+  if (
+    balance <= 0 ||
+    percent <= 0 ||
+    trades <= 0 ||
+    winRate < 0 ||
+    winRate > 100 ||
+    rr <= 0
+  ) {
+    alert("Please enter valid numbers.");
+    return;
+  }
+
+  var wins = trades * winRate / 100;
+  var losses = trades - wins;
+
+  var winMultiplier = 1 + (percent * rr / 100);
+  var lossMultiplier = 1 - (percent / 100);
+
+  var finalBalance =
+    balance *
+    Math.pow(winMultiplier, wins) *
+    Math.pow(lossMultiplier, losses);
+
+  var profit = finalBalance - balance;
+
+  document.getElementById("finalBalance").textContent =
+    "$" + finalBalance.toFixed(2);
+
+  document.getElementById("compoundProfit").textContent =
+    "$" + profit.toFixed(2);
+}
+
+
+/* ================= V4 PROP ================= */
+
+function calculateProp() {
+
+  var account = Number(document.getElementById("propAccount").value);
+  var daily = Number(document.getElementById("dailyLimit").value);
+  var total = Number(document.getElementById("totalLimit").value);
+  var risk = Number(document.getElementById("propRisk").value);
+
+  if (
+    account <= 0 ||
+    daily <= 0 ||
+    total <= 0 ||
+    risk <= 0
+  ) {
+    alert("Please enter valid numbers.");
+    return;
+  }
+
+  var dailyMoney = account * daily / 100;
+  var totalMoney = account * total / 100;
+  var riskMoney = account * risk / 100;
+
+  var tradeLimit = Math.floor(dailyMoney / riskMoney);
+
+  document.getElementById("dailyMoney").textContent =
+    "$" + dailyMoney.toFixed(2);
+
+  document.getElementById("totalMoney").textContent =
+    "$" + totalMoney.toFixed(2);
+
+  document.getElementById("propRiskMoney").textContent =
+    "$" + riskMoney.toFixed(2);
+
+  document.getElementById("tradeLimit").textContent =
+    tradeLimit;
+}
+
+
+/* ================= V5 JOURNAL ================= */
+
+var trades = [];
+
+try {
+  var savedTrades = localStorage.getItem("gfxTrades");
+
+  if (savedTrades) {
+    trades = JSON.parse(savedTrades);
+
+    if (!Array.isArray(trades)) {
+      trades = [];
+    }
+  }
+} catch (error) {
+  trades = [];
+}
+
+
+function saveTrades() {
+
+  try {
+    localStorage.setItem(
+      "gfxTrades",
+      JSON.stringify(trades)
+    );
+  } catch (error) {
+    /* Storage unavailable - app still works */
+  }
+}
+
+
+function addTrade() {
+
+  var pair = document.getElementById("tradePair").value.trim();
+  var result = document.getElementById("tradeResult").value;
+  var r = Number(document.getElementById("tradeR").value);
+
+  if (pair === "" || !isFinite(r)) {
+    alert("Enter the instrument and R result.");
+    return;
+  }
+
+  if (result === "loss" && r > 0) {
+    r = -r;
+  }
+
+  if (result === "win" && r < 0) {
+    r = Math.abs(r);
+  }
+
+  trades.push({
+    pair: pair,
+    result: result,
+    r: r,
+    date: new Date().toLocaleDateString()
+  });
+
+  saveTrades();
+  updateJournal();
+
+  document.getElementById("tradePair").value = "";
+  document.getElementById("tradeR").value = "3";
+}
+
+
+function clearTrades() {
+
+  if (trades.length === 0) {
+    return;
+  }
+
+  var confirmDelete =
+    confirm("Delete all journal trades?");
+
+  if (!confirmDelete) {
+    return;
+  }
+
+  trades = [];
+  saveTrades();
+  updateJournal();
+}
+
+
+function updateJournal() {
+
+  var total = trades.length;
+  var wins = 0;
+  var losses = 0;
+  var totalRValue = 0;
+
+  for (var i = 0; i < trades.length; i++) {
+
+    if (trades[i].result === "win") {
+      wins++;
+    } else {
+      losses++;
+    }
+
+    totalRValue += Number(trades[i].r) || 0;
+  }
+
+  var winRateValue =
+    total > 0 ? (wins / total) * 100 : 0;
+
+  var average =
+    total > 0 ? totalRValue / total : 0;
+
+  document.getElementById("totalTrades").textContent =
+    total;
+
+  document.getElementById("wins").textContent =
+    wins;
+
+  document.getElementById("losses").textContent =
+    losses;
+
+  document.getElementById("winRateStat").textContent =
+    winRateValue.toFixed(1) + "%";
+
+  document.getElementById("totalR").textContent =
+    totalRValue.toFixed(2) + "R";
+
+  document.getElementById("averageR").textContent =
+    average.toFixed(2) + "R";
+
+  var list = document.getElementById("tradeList");
+
+  if (trades.length === 0) {
+    list.innerHTML =
+      '<div class="empty">No trades yet.</div>';
+    return;
+  }
+
+  var html = "";
+
+  for (var j = trades.length - 1; j >= 0; j--) {
+
+    var trade = trades[j];
+
+    var rClass =
+      trade.r >= 0 ? "green" : "red";
+
+    var sign =
+      trade.r >= 0 ? "+" : "";
+
+    html +=
+      '<div class="trade">' +
+      '<strong>' + escapeHTML(trade.pair) + '</strong>' +
+      '<br>' +
+      '<span style="color:#888;font-size:12px;">' +
+      trade.date +
+      '</span>' +
+      '<br>' +
+      '<strong class="' + rClass + '">' +
+      sign + Number(trade.r).toFixed(2) + "R" +
+      '</strong>' +
+      '</div>';
+  }
+
+  list.innerHTML = html;
+}
+
+
+/* Prevent journal text from becoming HTML */
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+/* ================= START APP ================= */
+
+calculateRisk();
+calculateRR();
+calculateCompound();
+calculateProp();
+updateJournal();
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("./sw.js")
+      .then(function() {
+        console.log("GFX App is ready");
+      })
+      .catch(function(error) {
+        console.log("Service Worker error:", error);
+      });
+  });
+}
+</script>
+</body>
+  </html>
